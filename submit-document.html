@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SecureBank • Submit Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        .logo-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div
+                    class="w-9 h-9 bg-blue-700 rounded-2xl flex items-center justify-center text-white font-bold text-2xl logo-font">
+                    SB</div>
+                <div>
+                    <span class="text-2xl font-semibold tracking-tight logo-font text-blue-950">SecureBank</span>
+                    <span class="text-xs text-slate-400 block -mt-1 tracking-[2px]">DOCUMENT PROCESSING</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-x-6">
+                <a href="/tasks-portal.html"
+                    class="flex items-center gap-x-2 px-6 py-2.5 bg-blue-700 text-white rounded-3xl font-medium hover:bg-blue-800 transition-colors">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>View Tasks</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-12">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-10">
+            <div class="text-center mb-10">
+                <div
+                    class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-700 rounded-full mb-6">
+                    <i class="fa-solid fa-file-pdf text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-semibold text-slate-900 mb-3">Upload Document for Review</h1>
+                <p class="text-slate-600 max-w-xl mx-auto">
+                    PDF files are automatically analyzed — images are extracted and review tasks are created.
+                </p>
+            </div>
+
+            <form id="upload-form" class="max-w-2xl mx-auto">
+                <div class="mb-8">
+                    <label class="block text-sm font-medium text-slate-700 mb-3">Select PDF file</label>
+                    <div id="drop-zone"
+                        class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-3xl h-64 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 hover:bg-blue-50">
+                        <i class="fa-solid fa-cloud-arrow-up text-6xl text-slate-300 mb-6"></i>
+                        <p class="text-slate-600 font-medium mb-2">Click to browse or drag & drop PDF here</p>
+                        <p class="text-sm text-slate-500">Max file size: 50 MB</p>
+                        <p id="file-name" class="mt-4 text-blue-600 font-medium text-sm hidden"></p>
+                    </div>
+                    <input type="file" id="pdf-input" accept=".pdf" class="hidden" />
+                </div>
+
+                <button type="submit" id="upload-btn"
+                    class="w-full bg-blue-700 hover:bg-blue-800 text-white py-5 rounded-3xl font-semibold text-lg transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-x-3 disabled:opacity-60">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    SUBMIT FOR PROCESSING
+                </button>
+            </form>
+        </div>
+
+        <div class="mt-12 text-center text-slate-500 text-sm">
+            <p>Supported format: PDF • All uploads are encrypted and processed in a secure environment</p>
+        </div>
+    </main>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('pdf-input');
+        const fileNameEl = document.getElementById('file-name');
+        const uploadBtn = document.getElementById('upload-btn');
+        const form = document.getElementById('upload-form');
+
+        // Click to select
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Drag & drop
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.classList.add('border-blue-500', 'bg-blue-50');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', e => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showToast('Please select a PDF file', 'error');
+                return;
+            }
+            fileNameEl.textContent = file.name;
+            fileNameEl.classList.remove('hidden');
+            uploadBtn.disabled = false;
+        }
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            uploadBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/submit-task', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast(`Success! Task created.\nID: ${data.task_id}`, 'success');
+                    // window.location.href = '/tasks-portal.html';
+                } else {
+                    showToast('Upload failed. Please try again.', 'error');
+                }
+            } catch (err) {
+                showToast('Network error. Please check your connection.', 'error');
+            } finally {
+                uploadBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> SUBMIT FOR PROCESSING';
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // ====================== UTILS ======================
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '24px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.zIndex = '9999';
+
+            let bg = 'bg-slate-800';
+            if (type === 'success') bg = 'bg-emerald-600';
+            if (type === 'error') bg = 'bg-red-600';
+
+            toast.className = `${bg} text-white px-8 py-4 rounded-3xl shadow-2xl flex items-center gap-x-3 text-sm font-medium`;
+            toast.innerHTML = `
+                ${type === 'success' ? '<i class="fa-solid fa-check"></i>' : ''}
+                ${message}
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.transition = 'all 0.3s';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+    </script>
+</body>
+
+</html>

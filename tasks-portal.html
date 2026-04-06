@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SecureBank • Tasks Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+        :root {
+            --primary: 0 51 135;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        .logo-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .task-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+
+        .modal {
+            animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .subtask-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        #viewer-image {
+            transition: transform 0.15s ease;
+            max-width: none;
+            cursor: grab;
+        }
+
+        #viewer-image:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div
+                    class="w-9 h-9 bg-blue-700 rounded-2xl flex items-center justify-center text-white font-bold text-2xl logo-font">
+                    SB</div>
+                <div>
+                    <span class="text-2xl font-semibold tracking-tight logo-font text-blue-950">SecureBank</span>
+                    <span class="text-xs text-slate-400 block -mt-1 tracking-[2px]">TASKS PORTAL</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-x-6">
+                <!-- <a href="/submit-document.html"
+                    class="flex items-center gap-x-2 px-6 py-2.5 bg-blue-600 text-white rounded-3xl font-medium hover:bg-blue-700 transition-colors">
+                    <i class="fa-solid fa-upload"></i>
+                    <span>Submit New</span>
+                </a> -->
+                <button onclick="logout()" class="flex items-center gap-x-2 text-slate-600 hover:text-slate-800">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-3xl font-semibold text-slate-900">Active Review Tasks</h1>
+            <button onclick="fetchTasks()"
+                class="flex items-center gap-x-2 px-5 py-2.5 bg-white border hover:bg-slate-50 rounded-3xl transition-colors">
+                <i class="fa-solid fa-arrows-rotate text-slate-500"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+
+        <div id="tasks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- tasks rendered here -->
+        </div>
+    </main>
+
+    <!-- Task Detail Modal -->
+    <div id="task-modal"
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="modal bg-white w-full max-w-5xl rounded-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="px-8 py-5 border-b flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-x-4">
+                    <div id="modal-task-id" class="font-mono text-slate-500"></div>
+                    <h2 id="modal-filename" class="text-xl font-semibold"></h2>
+                </div>
+                <div class="flex items-center gap-x-4">
+                    <button onclick="pollSubtasks()"
+                        class="flex items-center gap-x-2 px-4 py-2 bg-white border hover:bg-slate-50 rounded-3xl transition-colors text-sm text-slate-600">
+                        <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                    </button>
+                    <button onclick="closeTaskModal()" class="text-slate-500 hover:text-slate-800 text-2xl ml-4">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-8 overflow-auto flex-1">
+                <div id="subtasks-grid" class="subtask-grid"></div>
+            </div>
+
+            <div class="p-6 border-t bg-slate-50 flex justify-end">
+                <button onclick="closeTaskModal()"
+                    class="px-8 py-3 bg-slate-200 hover:bg-slate-300 rounded-3xl font-medium">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <div id="image-modal" class="hidden fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center">
+        <div class="w-full max-w-6xl px-4">
+            <div class="flex justify-between text-white mb-4">
+                <div class="flex items-center gap-x-6">
+                    <button onclick="zoomOut()" class="text-2xl hover:text-blue-400"><i
+                            class="fa-solid fa-minus"></i></button>
+                    <span id="zoom-level" class="text-xl w-20 text-center">100%</span>
+                    <button onclick="zoomIn()" class="text-2xl hover:text-blue-400"><i
+                            class="fa-solid fa-plus"></i></button>
+                </div>
+                <button onclick="closeImageModal()" class="text-2xl hover:text-red-400">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl overflow-hidden max-h-[80vh] flex items-center justify-center">
+                <img id="viewer-image" class="max-h-[80vh] object-contain transition-transform" alt="Document page" />
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTask = null;
+        let viewerScale = 1;
+        let subtaskPollingInterval = null;
+
+        async function fetchTasks() {
+            try {
+                const res = await fetch('/api/tasks');
+                const tasks = await res.json();
+                renderTasks(tasks);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderTasks(tasks) {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+
+            if (tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-20 text-center text-slate-500">
+                        <i class="fa-solid fa-inbox text-6xl mb-4 block text-slate-300"></i>
+                        No tasks yet.<br>Start by <a href="/submit-document.html" class="text-blue-600 hover:underline">uploading a document</a>.
+                    </div>
+                `;
+                return;
+            }
+
+            tasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = 'task-card bg-white border rounded-3xl p-6 cursor-pointer hover:border-blue-300';
+                card.innerHTML = `
+                    <div class="font-mono text-xs text-slate-500 mb-2">${task.id.slice(0, 8)}</div>
+                    <h3 class="font-semibold text-lg mb-4 line-clamp-2">${task.filename}</h3>
+                    <div class="flex justify-between text-sm text-slate-600 mb-5">
+                        <span>${new Date(task.created_at).toLocaleDateString('en-GB')}</span>
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-3xl text-xs font-medium">
+                            ${Object.values(task.subtasks)?.length || 0} images
+                        </span>
+                    </div>
+                    <button class="w-full py-3 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors">
+                        View Details
+                    </button>
+                `;
+                card.onclick = () => openTaskModal(task.id);
+                container.appendChild(card);
+            });
+        }
+
+        async function openTaskModal(taskId) {
+            try {
+                const res = await fetch(`/api/tasks/${taskId}`);
+                currentTask = await res.json();
+
+                document.getElementById('modal-task-id').textContent = currentTask.id.slice(0, 8);
+                document.getElementById('modal-filename').textContent = currentTask.filename;
+
+                const grid = document.getElementById('subtasks-grid');
+                grid.innerHTML = '';
+
+                Object.values(currentTask.subtasks).forEach(sub => {
+                    const item = document.createElement('div');
+                    item.className = 'bg-white border rounded-3xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer';
+                    item.id = `subtask-${sub.id}`;
+                    item.innerHTML = `
+                        <div class="aspect-[4/3] bg-slate-100 relative">
+                            <img id="img-${sub.id}" src="${sub.thumb_url || sub.image_url}" class="w-full h-full object-cover"/>
+                            ${sub.status === 'pending' ? `
+                            <div id="spinner-${sub.id}" class="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+                                <i class="fa-solid fa-circle-notch fa-spin text-blue-600 text-3xl"></i>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="p-4">
+                            <div class="text-sm font-medium mb-2">${sub.description || 'Page image'}</div>
+                            <button onclick="event.stopPropagation(); openImage('${sub.image_url}')" 
+                                    class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-expand"></i> View full size
+                            </button>
+                        </div>
+                    `;
+                    item.onclick = () => openImage(sub.image_url);
+                    grid.appendChild(item);
+                });
+
+                document.getElementById('task-modal').classList.remove('hidden');
+
+                // Start polling 
+                if (subtaskPollingInterval) clearInterval(subtaskPollingInterval);
+                subtaskPollingInterval = setInterval(pollSubtasks, 3000); // Poll every 3 seconds
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function pollSubtasks() {
+            if (!currentTask || !currentTask.subtasks) return;
+
+            const pendingSubtasks = Object.values(currentTask.subtasks).filter(sub => sub.status === 'pending');
+
+            if (pendingSubtasks.length === 0) {
+                if (subtaskPollingInterval) clearInterval(subtaskPollingInterval);
+                return;
+            }
+
+            for (const sub of pendingSubtasks) {
+                try {
+                    const res = await fetch(`/api/tasks/${currentTask.id}/${sub.id}`);
+                    if (!res.ok) continue;
+
+                    const updatedSub = await res.json();
+
+                    // Update our local state
+                    currentTask.subtasks[sub.id] = updatedSub;
+
+                    if (updatedSub.status === 'completed') {
+                        // 1. Remove Spinner
+                        const spinnerDom = document.getElementById(`spinner-${sub.id}`);
+                        if (spinnerDom) spinnerDom.remove();
+
+                        // 2. Refresh Image (Add timestamp to bust browser cache since url is identical)
+                        const imgDom = document.getElementById(`img-${sub.id}`);
+                        if (imgDom) {
+                            const bustedUrl = `${updatedSub.image_url}?t=${Date.now()}`;
+                            imgDom.src = bustedUrl;
+
+                            // 3. Update onClick to open the new image url instead of cached
+                            const subtaskCard = document.getElementById(`subtask-${sub.id}`);
+                            if (subtaskCard) subtaskCard.onclick = () => openImage(bustedUrl);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Polling error for subtask", sub.id, e);
+                }
+            }
+        }
+
+        function closeTaskModal() {
+            if (subtaskPollingInterval) clearInterval(subtaskPollingInterval);
+            document.getElementById('task-modal').classList.add('hidden');
+        }
+
+        // Image viewer
+        function openImage(url) {
+            const img = document.getElementById('viewer-image');
+            img.src = url;
+            viewerScale = 1;
+            img.style.transform = 'scale(1)';
+            document.getElementById('zoom-level').textContent = '100%';
+            document.getElementById('image-modal').classList.remove('hidden');
+        }
+
+        function closeImageModal() {
+            document.getElementById('image-modal').classList.add('hidden');
+        }
+
+        function zoomIn() {
+            viewerScale = Math.min(viewerScale * 1.3, 6);
+            document.getElementById('viewer-image').style.transform = `scale(${viewerScale})`;
+            document.getElementById('zoom-level').textContent = `${Math.round(viewerScale * 100)}%`;
+        }
+
+        function zoomOut() {
+            viewerScale = Math.max(viewerScale / 1.3, 0.5);
+            document.getElementById('viewer-image').style.transform = `scale(${viewerScale})`;
+            document.getElementById('zoom-level').textContent = `${Math.round(viewerScale * 100)}%`;
+        }
+
+        function logout() {
+            if (confirm('Log out?')) window.location.href = '/submit-document.html';
+        }
+
+        // Init
+        window.addEventListener('load', fetchTasks);
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (!document.getElementById('image-modal').classList.contains('hidden')) {
+                    closeImageModal();
+                } else if (!document.getElementById('task-modal').classList.contains('hidden')) {
+                    closeTaskModal();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

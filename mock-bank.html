@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="137x126">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Valleysoft Bank — Secure. Smart. Yours.</title>
+    <style>
+        :root {
+            --color-primary: #0a3d62;
+            /* deep corporate blue */
+            --color-primary-light: #00aaff;
+            /* accent blue for highlights/buttons */
+            --color-dark: #001944;
+            /* very dark navy/black pearl */
+            --color-gray: #f8f9fa;
+            --color-text: #1e293b;
+            --radius: 10px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--color-gray);
+            color: var(--color-text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: var(--color-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--color-primary-light);
+        }
+
+        .logo span {
+            color: white;
+        }
+
+        nav a {
+            color: #e2e8f0;
+            text-decoration: none;
+            margin-left: 36px;
+            font-weight: 500;
+            transition: color 0.25s;
+        }
+
+        nav a:hover {
+            color: var(--color-primary-light);
+        }
+
+        .btn {
+            background: var(--color-primary-light);
+            color: white;
+            border: none;
+            padding: 11px 28px;
+            border-radius: 999px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .btn:hover {
+            background: #0088dd;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--color-primary-light);
+            color: var(--color-primary-light);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0a3d62 0%, #041021 100%);
+            color: white;
+            padding: 140px 30px 100px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 7vw, 5.2rem);
+            font-weight: 800;
+            margin-bottom: 1.4rem;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.4rem;
+            max-width: 680px;
+            margin: 0 auto 2.8rem;
+            opacity: 0.95;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .features {
+            max-width: 1240px;
+            margin: 110px auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 42px 34px;
+            box-shadow: 0 12px 32px rgba(4, 16, 33, 0.08);
+            transition: all 0.35s ease;
+            border-top: 5px solid var(--color-primary-light);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 24px 48px rgba(4, 16, 33, 0.14);
+        }
+
+        .feature-icon {
+            font-size: 3.6rem;
+            margin-bottom: 1.6rem;
+            color: var(--color-primary-light);
+        }
+
+        .feature-card h3 {
+            font-size: 1.75rem;
+            margin-bottom: 1.1rem;
+            color: var(--color-primary);
+        }
+
+        footer {
+            background: var(--color-dark);
+            color: #cbd5e1;
+            padding: 90px 30px 50px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 18px;
+                padding: 20px 24px;
+                height: auto;
+            }
+
+            nav {
+                display: none;
+                /* add hamburger later if needed */
+            }
+
+            .hero {
+                padding: 100px 24px 70px;
+            }
+        }
+    </style>
+
+    <script>
+        // personal
+        // window.wxOConfiguration = {
+        //     orchestrationID: "20260217-0910-1719-10d8-a2a123c9c01e_20260217-0928-4525-50a4-998a6c28e090",
+        //     hostURL: "https://dl.watson-orchestrate.ibm.com",
+        //     rootElementID: "root",
+        //     chatOptions: {
+        //         agentId: "2757532f-d8ea-451f-8e90-8fd8a334cb1d",
+        //     }
+        // };
+
+        // work
+        // draft
+        // window.wxOConfiguration = {
+        //     orchestrationID: "ad4fa6953138448689fb746aade5025e_3f497f36-1e9d-47e5-b2b6-ca3286de67f7",
+        //     hostURL: "https://au-syd.watson-orchestrate.cloud.ibm.com",
+        //     rootElementID: "root",
+        //     deploymentPlatform: "ibmcloud",
+        //     crn: "crn:v1:bluemix:public:watsonx-orchestrate:au-syd:a/ad4fa6953138448689fb746aade5025e:3f497f36-1e9d-47e5-b2b6-ca3286de67f7::",
+        //     chatOptions: {
+        //         agentId: "63f32627-62b1-4ac3-9644-64d7d84ea5c8",
+        //     }
+        // };
+        // live
+        window.wxOConfiguration = {
+            orchestrationID: "ad4fa6953138448689fb746aade5025e_3f497f36-1e9d-47e5-b2b6-ca3286de67f7",
+            hostURL: "https://au-syd.watson-orchestrate.cloud.ibm.com",
+            rootElementID: "root",
+            deploymentPlatform: "ibmcloud",
+            crn: "crn:v1:bluemix:public:watsonx-orchestrate:au-syd:a/ad4fa6953138448689fb746aade5025e:3f497f36-1e9d-47e5-b2b6-ca3286de67f7::",
+            chatOptions: {
+                agentId: "63f32627-62b1-4ac3-9644-64d7d84ea5c8",
+                agentEnvironmentId: "5421bbd7-ace1-4514-8b6c-b761f4bb97c8",
+            }
+        };
+
+
+        // setTimeout(
+        (async function () {
+            // 1. Get the token from our minimal server
+            const response = await fetch("/createJWT");
+            window.wxOConfiguration.token = await response.text();
+
+            const script = document.createElement('script');
+            script.src = `${window.wxOConfiguration.hostURL}/wxochat/wxoLoader.js?embed=true`;
+            script.addEventListener('load', function () {
+                wxoLoader.init();
+            });
+            document.head.appendChild(script);
+        })();
+        //, 0);
+    </script>
+</head>
+
+<body>
+
+    <header>
+        <div class="nav-container">
+            <div class="logo">
+                <img src="/static/VsoftLogo.png" alt="Valleysoft Bank" style="height: 50px; width: auto;">
+            </div>
+            <nav>
+                <a href="#">Personal</a>
+                <a href="#">Business</a>
+                <a href="#">Digital Banking</a>
+                <a href="#">About</a>
+            </nav>
+            <div>
+                <button class="btn btn-outline" style="margin-right:16px;">Sign In</button>
+                <button class="btn">Open Account</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Banking reimagined for tomorrow</h1>
+        <p>Secure, intelligent, and seamless — powered by cutting-edge technology for your financial future.</p>
+
+        <div class="hero-buttons">
+            <button class="btn" style="font-size:1.25rem; padding:14px 44px;">Get Started</button>
+            <button class="btn btn-outline" style="font-size:1.25rem; padding:12px 40px;">Learn More</button>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3>Advanced Security</h3>
+            <p>Multi-layer protection, biometric authentication, real-time monitoring, and instant card controls — your
+                money stays safe.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>Instant Digital Services</h3>
+            <p>Transfers, payments, investments — all in seconds. 24/7 access through our smart mobile & web platform.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Smart Financial Tools</h3>
+            <p>AI-powered insights, automated savings, high-yield options, and easy budgeting — grow your wealth
+                effortlessly.</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>Valleysoft Bank — A fictional digital bank for demonstration purposes only.<br>
+            Member of imaginary FDIC equivalent • © 2026 Valleysoft Bank Demo</p>
+    </footer>
+
+</body>
+
+</html>

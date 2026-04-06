@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank • Tasks Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+
+        :root {
+            --primary: 0 51 135;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        .logo-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .task-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        .modal {
+            animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .image-viewer-container {
+            overflow: auto;
+            scrollbar-width: thin;
+        }
+
+        #viewer-image {
+            transition: transform 0.15s ease;
+            max-width: none;
+            cursor: grab;
+        }
+
+        #viewer-image:active {
+            cursor: grabbing;
+        }
+
+        .subtask-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800">
+    <!-- HEADER -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div
+                    class="w-9 h-9 bg-blue-700 rounded-2xl flex items-center justify-center text-white font-bold text-2xl logo-font">
+                    SB</div>
+                <div>
+                    <span class="text-2xl font-semibold tracking-tight logo-font text-blue-950">SecureBank</span>
+                    <span class="text-xs text-slate-400 block -mt-1 tracking-[2px]">TASKS</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-x-6">
+                <div class="flex items-center gap-x-2 text-sm">
+                    <div class="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-sm">Ahmed Khalil</p>
+                        <p class="text-xs text-slate-500">Senior Compliance Officer</p>
+                    </div>
+                </div>
+                <div class="h-8 w-px bg-slate-200"></div>
+                <button onclick="logout()"
+                    class="flex items-center gap-x-2 text-slate-500 hover:text-slate-700 transition-colors">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span class="text-sm font-medium">Logout</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- UPLOAD SECTION -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 mb-10">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-3xl font-semibold text-slate-900">Submit New Document</h1>
+                    <p class="text-slate-500 mt-1">Upload PDF for automated image extraction &amp; review</p>
+                </div>
+                <div
+                    class="px-4 py-2 bg-blue-50 text-blue-700 rounded-2xl text-sm font-medium flex items-center gap-x-2">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Compliance Verified</span>
+                </div>
+            </div>
+
+            <form id="upload-form" class="flex gap-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-slate-600 mb-2">PDF Document</label>
+                    <div id="drop-zone"
+                        class="border-2 border-dashed border-slate-300 hover:border-blue-400 rounded-3xl h-40 flex flex-col items-center justify-center cursor-pointer transition-colors">
+                        <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-300 mb-3"></i>
+                        <p class="text-slate-500 text-sm">Drop PDF here or</p>
+                        <p id="file-name" class="text-blue-600 font-medium text-sm mt-1"></p>
+                    </div>
+                    <input type="file" id="pdf-input" accept=".pdf" class="hidden">
+                </div>
+
+                <div class="flex flex-col justify-end">
+                    <button type="submit" id="upload-btn"
+                        class="bg-blue-700 hover:bg-blue-800 transition-colors text-white px-10 py-4 rounded-3xl font-semibold flex items-center gap-x-3 shadow-lg shadow-blue-200">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>SUBMIT FOR REVIEW</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- TASKS LIST -->
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-slate-900">Active Tasks</h2>
+            <div class="flex items-center gap-x-3">
+                <div onclick="refreshTasks()"
+                    class="flex items-center gap-x-2 px-5 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-3xl cursor-pointer transition-all active:scale-95">
+                    <i class="fa-solid fa-arrows-rotate text-slate-400"></i>
+                    <span class="font-medium text-sm">Refresh</span>
+                </div>
+                <div class="text-sm text-slate-500 flex items-center gap-x-1">
+                    <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    Live
+                </div>
+            </div>
+        </div>
+
+        <div id="tasks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- TASK DETAIL MODAL -->
+    <div id="task-modal"
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center">
+        <div class="modal bg-white w-full max-w-5xl mx-4 rounded-3xl shadow-2xl max-h-[92vh] flex flex-col">
+            <!-- Header -->
+            <div class="px-8 py-6 border-b flex items-center justify-between">
+                <div class="flex items-center gap-x-4">
+                    <div id="modal-task-id" class="font-mono text-lg font-semibold text-slate-400"></div>
+                    <div id="modal-filename" class="text-xl font-semibold"></div>
+                </div>
+                <div class="flex items-center gap-x-6">
+                    <a id="modal-pdf-link" href="#" target="_blank"
+                        class="flex items-center gap-x-2 text-blue-600 hover:text-blue-700 font-medium">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Original PDF</span>
+                    </a>
+                    <button onclick="closeTaskModal()"
+                        class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-2xl transition-colors">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-auto p-8">
+                <div class="grid grid-cols-3 gap-6 mb-10">
+                    <div>
+                        <p class="text-xs uppercase tracking-widest text-slate-500 mb-1">Created</p>
+                        <p id="modal-created" class="font-medium"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-widest text-slate-500 mb-1">Status</p>
+                        <span id="modal-status"
+                            class="inline-flex items-center px-4 py-1.5 rounded-3xl text-sm font-medium"></span>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-widest text-slate-500 mb-1">Subtasks</p>
+                        <p id="modal-subtask-count" class="text-4xl font-semibold text-slate-900"></p>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-x-3">
+                    <span>Extracted Images</span>
+                    <span id="subtask-count-badge"
+                        class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-3xl"></span>
+                </h3>
+
+                <div id="subtasks-grid" class="subtask-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <div class="p-6 border-t bg-slate-50 rounded-b-3xl flex justify-end">
+                <button onclick="closeTaskModal()"
+                    class="px-8 py-3 text-slate-600 hover:bg-slate-100 rounded-3xl font-medium transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMAGE VIEWER MODAL -->
+    <div id="image-modal" class="hidden fixed inset-0 bg-black/90 z-[200] flex items-center justify-center">
+        <div class="w-full max-w-[1100px] mx-4">
+            <!-- Controls -->
+            <div class="flex justify-between items-center mb-4 px-2">
+                <div class="flex items-center gap-x-8 text-white">
+                    <button onclick="zoomOut()"
+                        class="flex items-center justify-center w-11 h-11 hover:bg-white/10 rounded-2xl transition-colors">
+                        <i class="fa-solid fa-minus text-2xl"></i>
+                    </button>
+                    <div id="zoom-level" class="font-mono text-xl tabular-nums w-20 text-center">100%</div>
+                    <button onclick="zoomIn()"
+                        class="flex items-center justify-center w-11 h-11 hover:bg-white/10 rounded-2xl transition-colors">
+                        <i class="fa-solid fa-plus text-2xl"></i>
+                    </button>
+                </div>
+
+                <button onclick="closeImageModal()"
+                    class="flex items-center gap-x-3 text-white hover:text-red-400 transition-colors">
+                    <span class="text-sm font-medium">ESC</span>
+                    <i class="fa-solid fa-xmark text-3xl"></i>
+                </button>
+            </div>
+
+            <!-- Viewer -->
+            <div id="viewer-container" class="image-viewer-container bg-white rounded-3xl shadow-2xl overflow-hidden"
+                style="max-height: 82vh;">
+                <img id="viewer-image" class="block mx-auto transition-transform origin-center" alt="Document image">
+            </div>
+
+            <!-- Footer info -->
+            <div class="text-center text-white/70 text-sm mt-4 flex items-center justify-center gap-x-6">
+                <div class="flex items-center gap-x-2">
+                    <i class="fa-solid fa-mouse"></i>
+                    <span>Drag to pan</span>
+                </div>
+                <div>•</div>
+                <div class="flex items-center gap-x-2">
+                    <i class="fa-solid fa-scroll"></i>
+                    <span>Scroll wheel to zoom</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tailwind script already loaded via CDN
+        function initTailwind() {
+            // Nothing needed - Tailwind CDN works with classes
+        }
+
+        // ====================== DATA ======================
+        let allTasks = [];
+
+        // ====================== API ======================
+        async function fetchTasks() {
+            try {
+                const res = await fetch('/api/tasks');
+                allTasks = await res.json();
+                renderTasks();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function submitPDF(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const btn = document.getElementById('upload-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> PROCESSING...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/submit-task', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast(`Task created! ID: ${data.task_id.substring(0, 8)}...`, 'success');
+                    fetchTasks(); // refresh list
+                } else {
+                    showToast('Upload failed. Please try again.', 'error');
+                }
+            } catch (e) {
+                showToast('Network error', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // ====================== MOCK CHECK DOCUMENT (called by backend) ======================
+        // The real logic is in FastAPI backend
+
+        // ====================== RENDER ======================
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+
+            if (allTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-3 py-20 text-center">
+                        <i class="fa-solid fa-inbox text-6xl text-slate-200"></i>
+                        <p class="mt-6 text-slate-400">No tasks yet.<br>Upload a PDF above to begin.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            allTasks.forEach(task => {
+                const subCount = task.subtasks ? task.subtasks.length : 0;
+
+                const card = document.createElement('div');
+                card.className = `task-card bg-white border border-slate-100 rounded-3xl p-6 cursor-pointer`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <div class="font-mono text-xs text-slate-400">${task.id.substring(0, 8)}</div>
+                            <div class="font-semibold text-lg leading-tight mt-1 line-clamp-2">${task.filename}</div>
+                        </div>
+                        <div class="px-4 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-3xl">Pending</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-x-2 text-slate-500">
+                            <i class="fa-solid fa-calendar"></i>
+                            <span>${new Date(task.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                        </div>
+                        <div class="flex items-center gap-x-1.5">
+                            <div class="w-6 h-6 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center text-xs font-bold">${subCount}</div>
+                            <span class="text-slate-500">images</span>
+                        </div>
+                    </div>
+                    
+                    <div onclick="event.stopImmediatePropagation(); viewTask('${task.id}')" 
+                         class="mt-8 w-full py-3.5 bg-blue-700 hover:bg-blue-800 transition-colors text-white rounded-3xl text-sm font-semibold flex items-center justify-center gap-x-2">
+                        <i class="fa-solid fa-eye"></i>
+                        VIEW SUBTASKS
+                    </div>
+                `;
+
+                card.onclick = () => viewTask(task.id);
+                container.appendChild(card);
+            });
+        }
+
+        let currentTask = null;
+
+        async function viewTask(taskId) {
+            try {
+                const res = await fetch(`/api/tasks/${taskId}`);
+                currentTask = await res.json();
+
+                // Fill modal
+                document.getElementById('modal-task-id').textContent = currentTask.id.substring(0, 8);
+                document.getElementById('modal-filename').textContent = currentTask.filename;
+                document.getElementById('modal-created').textContent = new Date(currentTask.created_at).toLocaleString('en-GB');
+
+                const statusEl = document.getElementById('modal-status');
+                statusEl.textContent = 'Pending Review';
+                statusEl.className = `inline-flex items-center px-4 py-1.5 rounded-3xl text-sm font-medium bg-amber-100 text-amber-700`;
+
+                document.getElementById('modal-subtask-count').textContent = currentTask.subtasks.length;
+                document.getElementById('subtask-count-badge').textContent = `${currentTask.subtasks.length} images`;
+
+                // PDF link
+                if (currentTask.pdf_url) {
+                    document.getElementById('modal-pdf-link').href = currentTask.pdf_url;
+                    document.getElementById('modal-pdf-link').classList.remove('hidden');
+                }
+
+                // Render subtasks grid
+                const grid = document.getElementById('subtasks-grid');
+                grid.innerHTML = '';
+
+                currentTask.subtasks.forEach(sub => {
+                    const div = document.createElement('div');
+                    div.className = `bg-white border border-slate-100 rounded-3xl overflow-hidden cursor-pointer hover:border-blue-300 transition-colors`;
+                    div.innerHTML = `
+                        <div class="aspect-video bg-slate-100 relative">
+                            <img src="${sub.thumb_url || sub.image_url}" 
+                                 class="w-full h-full object-cover">
+                            <div class="absolute top-3 right-3 bg-white/90 text-[10px] font-mono px-2 py-0.5 rounded-2xl">
+                                ${sub.id.substring(0, 6)}
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="text-xs text-slate-500">IMAGE ${sub.description.split(' ')[1] || ''}</div>
+                            <div onclick="event.stopImmediatePropagation(); openImage('${sub.image_url}')" 
+                                 class="mt-3 text-blue-700 hover:text-blue-800 font-medium flex items-center gap-x-2 text-sm">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <span>View full resolution</span>
+                            </div>
+                        </div>
+                    `;
+                    div.onclick = () => openImage(sub.image_url);
+                    grid.appendChild(div);
+                });
+
+                document.getElementById('task-modal').classList.remove('hidden');
+                document.getElementById('task-modal').classList.add('flex');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function closeTaskModal() {
+            const modal = document.getElementById('task-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // ====================== IMAGE VIEWER ======================
+        let viewerScale = 1;
+        let viewerTranslateX = 0;
+        let viewerTranslateY = 0;
+        let isDragging = false;
+        let startMouseX = 0;
+        let startMouseY = 0;
+
+        function openImage(url) {
+            closeTaskModal(); // optional
+
+            const modal = document.getElementById('image-modal');
+            const img = document.getElementById('viewer-image');
+
+            img.src = url;
+            viewerScale = 1;
+            viewerTranslateX = 0;
+            viewerTranslateY = 0;
+            updateViewerTransform();
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Enable wheel zoom
+            img.addEventListener('wheel', handleWheelZoom, { passive: false });
+        }
+
+        function updateViewerTransform() {
+            const img = document.getElementById('viewer-image');
+            img.style.transform = `translate(${viewerTranslateX}px, ${viewerTranslateY}px) scale(${viewerScale})`;
+            document.getElementById('zoom-level').textContent = `${Math.round(viewerScale * 100)}%`;
+        }
+
+        function zoomIn() {
+            viewerScale = Math.min(viewerScale * 1.25, 5);
+            updateViewerTransform();
+        }
+
+        function zoomOut() {
+            viewerScale = Math.max(viewerScale / 1.25, 0.4);
+            updateViewerTransform();
+        }
+
+        function handleWheelZoom(e) {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.15 : 0.85;
+            viewerScale = Math.max(0.4, Math.min(viewerScale * factor, 5));
+            updateViewerTransform();
+        }
+
+        // Drag to pan
+        function initImageDrag() {
+            const img = document.getElementById('viewer-image');
+            const container = document.getElementById('viewer-container');
+
+            img.addEventListener('mousedown', (e) => {
+                if (viewerScale <= 1) return;
+                isDragging = true;
+                startMouseX = e.clientX - viewerTranslateX;
+                startMouseY = e.clientY - viewerTranslateY;
+                img.style.cursor = 'grabbing';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                viewerTranslateX = e.clientX - startMouseX;
+                viewerTranslateY = e.clientY - startMouseY;
+                updateViewerTransform();
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                if (img) img.style.cursor = 'grab';
+            });
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('image-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            // remove wheel listener if needed but ok
+        }
+
+        // ====================== UTILS ======================
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '24px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.zIndex = '9999';
+
+            let bg = 'bg-slate-800';
+            if (type === 'success') bg = 'bg-emerald-600';
+            if (type === 'error') bg = 'bg-red-600';
+
+            toast.className = `${bg} text-white px-8 py-4 rounded-3xl shadow-2xl flex items-center gap-x-3 text-sm font-medium`;
+            toast.innerHTML = `
+                ${type === 'success' ? '<i class="fa-solid fa-check"></i>' : ''}
+                ${message}
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.transition = 'all 0.3s';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+
+        function logout() {
+            if (confirm('Log out of SecureBank portal?')) {
+                window.location.reload();
+            }
+        }
+
+        function refreshTasks() {
+            fetchTasks();
+            showToast('Tasks refreshed', 'success');
+        }
+
+        // ====================== FILE UPLOAD HANDLING ======================
+        function setupUpload() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('pdf-input');
+            const form = document.getElementById('upload-form');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const file = fileInput.files[0];
+                if (file) submitPDF(file);
+            });
+        }
+
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showToast('Please select a PDF file only', 'error');
+                return;
+            }
+
+            document.getElementById('file-name').textContent = file.name;
+            showToast(`Selected: ${file.name}`, 'success');
+        }
+
+        // ====================== KEYBOARD ======================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") {
+                const imageModal = document.getElementById('image-modal');
+                if (!imageModal.classList.contains('hidden')) {
+                    closeImageModal();
+                } else {
+                    const taskModal = document.getElementById('task-modal');
+                    if (!taskModal.classList.contains('hidden')) closeTaskModal();
+                }
+            }
+        });
+
+        // ====================== INIT ======================
+        window.onload = async function () {
+            initTailwind();
+            setupUpload();
+            initImageDrag();
+
+            // Initial load
+            await fetchTasks();
+
+            // Fake a couple of tasks on first load for demo
+            if (allTasks.length === 0) {
+                showToast('Welcome back! Upload your first PDF to see magic.', 'success');
+            }
+
+            // Auto refresh every 15s (demo only)
+            setInterval(() => {
+                if (document.visibilityState === 'visible') fetchTasks();
+            }, 15000);
+        };
+    </script>
+</body>
+
+</html>
