@@ -448,18 +448,19 @@ def read_pkey(fp):
 def create_jwt():
     """Generates and returns the minimalist Watsonx token."""
     
+    now = int(time.time())
+    
     jwt_content = {
         "sub": "DemoUser123", # Hardcoded anonymous user ID
-        "iss": "my-demo-app",# Issuer: Recommended to prevent strict validation rejections
-
-
         "context": {
-            "wxo_clientID": "3f497f36-1e9d-47e5-b2b6-ca3286de67f7", # Replace with your actual client ID
+            "wxo_clientID": "865511", # Replace with your actual client ID
             "wxo_name": "Demo Admin",
             "wxo_role": "Admin"
         },
-        # Expiration time: Current time + 24 hours
-        "exp": int(time.time()) + (24 * 3600) 
+        # Expiration time: Current time 
+        # JWT token expiry with a maximum expiry time of 7100 seconds.
+        # https://gemini.google.com/share/99dea16ca3ab
+        "exp": now + (3600) 
     }
 
     PRIVATE_KEY = read_pkey('example-jwtRS256.key')
